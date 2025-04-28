@@ -11,7 +11,13 @@ import { ActivatedRoute } from '@angular/router';
 export class ProductsListComponent implements OnInit {
   products: Product[] = [];
   currentCategoryId: number = 1;
+  previousCategoryId: number = 1;
   searchMode: boolean = false;
+
+  // properties for pagination
+  pageNumber: number = 1;
+  size: number = 8;
+  totalElements: number = 0;
 
   constructor(
     private productService: ProductService,
@@ -55,10 +61,24 @@ export class ProductsListComponent implements OnInit {
       this.currentCategoryId = 1;
     }
 
-    this.productService
-      .getProductList(this.currentCategoryId)
-      .subscribe((data) => {
-        this.products = data;
-      });
+    // check if we have different category than the previous
+    // Note: Angular will reuse a component if it is currently being viewed
+
+    if (this.previousCategoryId != this.currentCategoryId) {
+      this.pageNumber = 1;
+    }
+
+    this.previousCategoryId = this.currentCategoryId;
+
+    console.log(`currentCategoryId=${this.currentCategoryId}, pageNumber=${this.pageNumber}`)
+
+    this.productService.getProductListPaginate(this.pageNumber - 1, this.size, this.currentCategoryId).subscribe(
+      data => {
+        this.products = data._embedded.products;
+        this.pageNumber = data.page.number + 1;
+        this.size = data.page.size;
+        this.totalElements = data.page.totalElements
+      }
+    );
   }
 }
